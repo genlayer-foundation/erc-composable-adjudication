@@ -22,7 +22,7 @@ Mechanical: compute and freeze the interface IDs once the function signatures st
 The outline currently says the router's escalation window length comes from the EAS adjudication definition. That conflicts with two settled principles: enforceable parameters need an on-chain source readable by the composite, and the definition describes the case, not the composite. Likely resolution: the window comes from the composite's instantiation configuration (or activation `data`), with the definition merely echoing it for readers. The outline must be corrected once decided.
 
 ### 6. X-of-Y agreement semantics
-What "X children agree" means over EAS-defined resolutions. Likely equality of a designated outcome field in the resolution schema, but the aggregation rule and its reference (instantiation config vs. definition) need specification.
+What "X children agree" means over EAS-defined resolutions. Likely equality of a designated outcome field in the resolution schema, but the aggregation rule and its reference (instantiation config vs. definition) need specification. Design direction already settled (2026-07-30): window-based exclusion of unresolved children (pool shrinks, threshold never lowers) and a no-quorum outcome in the definition's outcome space when the threshold becomes unreachable; non-conforming child resolutions and operator independence are implementation-defined; detailed semantics come with the implementation.
 
 ### 7. Escalation funding patterns (parked as future work)
 Pay-as-you-go vs. pre-funded budget. Already moved to the outline's Future Work section; listed here only so the parked status is visible in one place.
