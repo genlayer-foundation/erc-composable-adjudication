@@ -30,7 +30,7 @@ Composites need leaves. v0.1 implements at least the following leaf Adjudicators
 
 1. **GenLayer adjudicator**: adapter fronting GenLayer. An intelligent contract decides the case; the adapter surfaces its resolution.
 2. **Kleros adjudicator**: adapter fronting Kleros. Activation starts the underlying Kleros case, forwarding the arbitration cost in the same transaction; the adapter stays `Active` through any internal appeal rounds and surfaces the final outcome as the resolution.
-3. **Wallet adjudicator**: a single wallet address is authorized to resolve. The adjudicator itself is fully on-chain; what operates the wallet (an off-chain agent, a human, a multisig) is out of scope, which is why it is named for the wallet, not the operator.
+3. **Account adjudicator**: a single account (EOA or contract) is authorized to resolve, via a `msg.sender` check against a fixed address. The adjudicator itself is fully on-chain; what stands behind the account (an off-chain agent, a human, a Safe, an ERC-4337 smart account) is out of scope, which is why it is named for the on-chain account, not the operator.
 4. **Echo adjudicator (testing)**: resolves on activation with a canned resolution taken from its adjudication definition, whose content includes or references the resolution attestation UID to echo. The resolution never travels through `data` (the core bars semantic content there); the echo reads it from the on-chain definition at registration, which also exercises the definition-reading path end-to-end. Honors the full `Registered → Active → Resolved` lifecycle, with no decision logic at all: a test double for exercising Adjudicables, composites, and integrations without any real system behind it.
 
 ## Part 4: What the factory standard itself covers

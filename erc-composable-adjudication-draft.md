@@ -121,7 +121,7 @@ Resolution finality is the load-bearing guarantee: once `Resolved`, status and r
 
 **Resolution timing.** The Adjudicator's operator knows the outcome before the chain does, and choosing the publication moment is an extractable advantage wherever markets consume resolutions (prediction markets, insurance). The standard accepts this discretion; it is part of the trust placed in the chosen Adjudicator, alongside honesty, liveness, and minimum `Active` duration.
 
-Adapters fronting other chains or off-chain systems add their own trust assumptions (authorized submitter wallets, bridges); these belong to the adapter's documentation, not this standard.
+Adapters fronting other chains or off-chain systems add their own trust assumptions (authorized submitter accounts, bridges); these belong to the adapter's documentation, not this standard.
 
 ## Prior art
 
