@@ -52,7 +52,7 @@ An Adjudicator MUST expose:
    - `Active` — adjudication is underway with no final resolution yet. All intermediate conditions (evidence gathering, deliberation, internal rounds, awaiting escalation inside a composite) map to `Active`.
    - `Resolved` — a final resolution exists. Status MUST NOT change once `Resolved`.
 
-4. **`resolution(uint256 adjudicationId) returns (bytes32)`** — the EAS attestation UID of the **resolution**. MUST return the UID once status is `Resolved` and MUST revert or return zero before that. The ERC does not constrain the resolution's content; its schema is referenced by the adjudication definition.
+4. **`resolution(uint256 adjudicationId) returns (bytes32)`** — the EAS attestation UID of the **resolution**. MUST return the UID once status is `Resolved` and MUST revert or return zero before that. Once `Resolved`, the value returned MUST equal the `resolutionUID` emitted in the adjudication's `Adjudicated` event and MUST NOT ever change. The ERC does not constrain the resolution's content; its schema is referenced by the adjudication definition.
 
 5. **ERC-165.** Every Adjudicator MUST implement `supportsInterface` and MUST answer `true` for this interface's ID. This is REQUIRED (not optional): it is the discovery mechanism for the interface itself and the rail on which all future extensions ride.
 
