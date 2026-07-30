@@ -82,6 +82,7 @@ Three kinds of attestations, whose schemas are registered in an EAS schema regis
 **Attestation integrity (normative).** The lifecycle's finality guarantee is only as strong as the content behind the UIDs, so:
 
 - Definition and resolution attestations MUST be irrevocable: their EAS schemas MUST be registered with revocability disabled. A resolution whose content could be revoked after `Resolved` — leaving consumers holding an immutable pointer to a repudiated statement — would defeat the standard's load-bearing guarantee.
+- Definition and resolution attestations MUST have an `expirationTime` of zero. An expiring attestation is revocation on a timer: a resolution that expires self-repudiates on schedule under EAS validity semantics despite passing every other check, and a definition that expires during a long `Registered` dormancy evaporates the baseline exactly when a contest finally needs it.
 - Resolution attestations MUST be on-chain attestations.
 - Definition attestations MUST be on-chain attestations on the same chain as the Adjudicator, so their content is readable from the contract — this is what makes definition-governed rules (such as activation authorization) enforceable rather than advisory. Definitions SHOULD stay compact, embedding content hashes for bulky baseline material rather than mutable references (such as URLs), so that substitution or withholding of the baseline is detectable.
 
