@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Composable Adjudication: ERC One Pager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300..900;1,8..60,300..900&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" />
+<style>
+  :root{
+    --paper:#f7f4ec;
+    --paper-2:#efeadd;
+    --ink:#171513;
+    --ink-2:#3a342d;
+    --muted:#7a7065;
+    --rule:#1d1a17;
+    --rule-soft:#c8bfae;
+    --accent:#7a1f25;       /* claret */
+    --accent-soft:#b06469;
+    --page-w: 210mm;
+    --page-h: 297mm;
+    --margin-x: 15mm;
+    --margin-y: 12mm;
+  }
+
+  *{ box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body{
+    margin: 0;
+    padding: 0;
+    background:#d9d4c6;
+    font-family:"Source Serif 4", Georgia, serif;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  .stage{
+    display:flex;
+    justify-content:center;
+    padding: 32px 16px 64px;
+  }
+  .page{
+    width: var(--page-w);
+    height: var(--page-h);
+    background: var(--paper);
+    color: var(--ink);
+    padding: var(--margin-y) var(--margin-x);
+    box-shadow: 0 2px 4px rgba(0,0,0,.08), 0 24px 60px rgba(0,0,0,.18);
+    position: relative;
+    display: grid;
+    grid-template-rows: auto auto 1fr auto;
+    gap: 3mm;
+    overflow: hidden;
+  }
+
+  /* ───────────── Masthead ───────────── */
+  .masthead{
+    display:flex;
+    flex-direction: column;
+    gap: 2mm;
+    padding-bottom: 2.5mm;
+    border-bottom: 0.7pt solid var(--rule);
+  }
+  .meta{
+    font-family:"JetBrains Mono", ui-monospace, monospace;
+    font-size: 7.5pt;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display:flex;
+    gap: 10px;
+    align-items:baseline;
+    white-space: nowrap;
+    justify-content: flex-end;
+  }
+  .meta b{ color: var(--ink); font-weight:600; }
+  .meta .dot{ color: var(--rule-soft); }
+
+  h1.title{
+    font-family:"Source Serif 4", Georgia, serif;
+    font-weight: 500;
+    font-size: 22pt;
+    line-height: 1.0;
+    letter-spacing: -0.01em;
+    margin: 0;
+    font-variation-settings: "opsz" 60;
+    white-space: nowrap;
+  }
+  .subtitle{
+    font-family:"Source Serif 4", Georgia, serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: 13pt;
+    color: var(--ink-2);
+    margin: 1mm 0 0;
+    font-variation-settings: "opsz" 36;
+  }
+
+  /* ───────────── Abstract ───────────── */
+  .abstract p{
+    margin: 0 0 1.25mm;
+    font-size: 8.9pt;
+    line-height: 1.39;
+    color: var(--ink-2);
+    text-wrap: pretty;
+    hyphens: auto;
+  }
+  .abstract p.lead{
+    color: var(--ink);
+    font-size: 9.6pt;
+    font-weight: 500;
+  }
+
+  /* ───────────── Body columns ───────────── */
+  .body{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto 1fr;
+    column-gap: 7mm;
+    align-content:start;
+  }
+  .body .col-left { grid-column: 1; grid-row: 2; }
+  .body .col-right { grid-column: 2; grid-row: 2; }
+  .body > * { break-inside: avoid; }
+
+  section.col-block{ padding-top: 2mm; }
+  section.col-block + section.col-block{ margin-top: 1.5mm; }
+
+  h2.section-h{
+    font-family:"Inter Tight", system-ui, sans-serif;
+    font-size: 7.5pt;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--ink);
+    margin: 0 0 1.5mm;
+    display:flex;
+    justify-content: space-between;
+    align-items:baseline;
+    white-space: nowrap;
+  }
+  h2.section-h .num{
+    font-family:"JetBrains Mono", ui-monospace, monospace;
+    color: var(--accent);
+    font-size: 7.5pt;
+    letter-spacing:.06em;
+  }
+
+  .body p{
+    margin: 0 0 1.65mm;
+    font-size: 8.9pt;
+    line-height: 1.43;
+    color: var(--ink-2);
+    text-wrap: pretty;
+    hyphens: auto;
+  }
+  .body p.first::first-letter{
+    font-family:"Source Serif 4", Georgia, serif;
+    font-weight: 600;
+    font-size: 18pt;
+    line-height: 0.9;
+    float: left;
+    padding: 1.2mm 1.4mm 0 0;
+    color: var(--accent);
+  }
+  .body code, .abstract code{
+    font-family:"JetBrains Mono", ui-monospace, monospace;
+    font-size: 8pt;
+    letter-spacing: .01em;
+  }
+
+  ul.bullets{ list-style:none; margin: 0; padding: 0; }
+  ul.bullets li{
+    position: relative;
+    padding: 0.48mm 0 0.48mm 6mm;
+    font-size: 8.2pt;
+    line-height: 1.37;
+    color: var(--ink-2);
+  }
+  ul.bullets li .marker{
+    position:absolute;
+    left:0; top: 0.8mm;
+    font-family:"JetBrains Mono", ui-monospace, monospace;
+    font-size: 7pt;
+    color: var(--accent);
+    letter-spacing:.04em;
+  }
+  ul.bullets li b{ color: var(--ink); font-weight: 600; }
+
+  /* ───────────── Lifecycle figure ───────────── */
+  figure.stack{
+    grid-column: 1 / -1;
+    grid-row: 1;
+    margin: 2mm 0 1mm;
+    padding: 0;
+    background: var(--paper-2);
+  }
+  .stack-inner{
+    display: grid;
+    grid-template-columns: 1fr 12mm;
+    align-items: stretch;
+  }
+  .vertical-label{
+    background: var(--accent);
+    color: var(--paper);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:"Inter Tight", system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 10pt;
+    letter-spacing: .28em;
+    text-transform: uppercase;
+    padding: 4mm 0;
+    overflow: hidden;
+  }
+  .vertical-label .vl-text{
+    writing-mode: vertical-rl;
+    white-space: nowrap;
+    line-height: 1;
+  }
+  figure.stack .figcap{
+    padding: 1mm 4mm 1.5mm;
+    background: var(--paper);
+    font-family:"Source Serif 4", Georgia, serif;
+    font-style: italic;
+    font-size: 8.5pt;
+    color: var(--ink-2);
+  }
+
+  table.layers{
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8.2pt;
+  }
+  table.layers td{
+    padding: 0.9mm 2mm;
+    text-align: left;
+    vertical-align: baseline;
+  }
+  table.layers tr:first-child td{ padding-top: 1.6mm; }
+  table.layers tr:last-child td{ padding-bottom: 1.6mm; }
+  table.layers td.num{
+    width: 8mm;
+    font-family:"JetBrains Mono", ui-monospace, monospace;
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 8pt;
+    padding-left: 4mm;
+  }
+  table.layers td.layer{
+    font-family:"Source Serif 4", Georgia, serif;
+    font-weight: 600;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  table.layers td.std{
+    font-family:"JetBrains Mono", ui-monospace, monospace;
+    font-size: 8.1pt;
+    color: var(--ink-2);
+    letter-spacing: .02em;
+    white-space: nowrap;
+  }
+
+  /* ───────────── Footer ───────────── */
+  .colophon{
+    padding-top: 1.5mm;
+    border-top: 0.6pt solid var(--rule-soft);
+    display:flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 8mm;
+    font-family:"JetBrains Mono", ui-monospace, monospace;
+    font-size: 7pt;
+    color: var(--muted);
+    letter-spacing: .04em;
+  }
+  .colophon .cta{
+    font-family:"Inter Tight", system-ui, sans-serif;
+    font-size: 9pt;
+    color: var(--ink);
+    letter-spacing:.02em;
+    font-weight: 600;
+  }
+  .colophon .cta b{ color: var(--accent); font-weight:700; }
+  .deadline{
+    display:inline-flex;
+    align-items:center;
+    gap: 2mm;
+    padding: 1.2mm 2.4mm;
+    background: var(--ink);
+    color: var(--paper);
+    font-family:"JetBrains Mono", ui-monospace, monospace;
+    font-size: 7pt;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .deadline .pulse{
+    width: 1.6mm; height: 1.6mm; background: var(--accent-soft); border-radius:50%;
+  }
+
+  /* ───────────── Print ───────────── */
+  @page{ size: A4 portrait; margin: 0; }
+  @media print{
+    body, html { background: white; }
+    .stage{ padding: 0; }
+    .page{ box-shadow: none; width: 210mm; height: 297mm; page-break-after: avoid; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <article class="page">
+      <!-- ───── Masthead ───── -->
+      <header class="masthead">
+        <div class="meta">
+          <span><b>ERC pre-draft</b></span>
+          <span class="dot">·</span>
+          <span>July 2026</span>
+          <span class="dot">·</span>
+          <span>github.com/genlayer-foundation/erc-composable-adjudication</span>
+        </div>
+        <h1 class="title">Composable Adjudication</h1>
+        <p class="subtitle">One interface for all on-chain adjudication.</p>
+      </header>
+
+      <!-- ───── Abstract ───── -->
+      <section class="abstract">
+        <p class="lead">Every protocol that needs decisions resolved integrates each adjudication system bespoke. There is no way to combine systems, and no way to start cheap and escalate only when contested.</p>
+        <p>This ERC defines a minimal standard interface, the <b style="color:var(--ink)">Adjudicator</b>, behind which any resolution system can sit: GenLayer validators, Kleros jurors, UMA's optimistic oracle, or a single account. Consumers (<b style="color:var(--ink)">Adjudicables</b>) integrate once. An adjudication is <b style="color:var(--ink)">registered</b> with a pointer to its definition, typically at agreement time, before any contest, like an arbitration clause. It is <b style="color:var(--ink)">activated</b>, with the contest evidence attached, only if a decision is actually needed. Existing systems join via thin adapter contracts; no changes required on their side.</p>
+      </section>
+
+      <!-- ───── Body ───── -->
+      <div class="body">
+
+        <!-- Lifecycle figure spans both columns -->
+        <figure class="stack">
+          <div class="stack-inner">
+            <table class="layers">
+              <tbody>
+                <tr>
+                  <td class="num">01</td>
+                  <td class="layer">Register, at agreement time</td>
+                  <td class="std">registerAdjudication(definition, data)</td>
+                </tr>
+                <tr>
+                  <td class="num">02</td>
+                  <td class="layer">Activate, at contest time</td>
+                  <td class="std">activate(id, evidence, data)</td>
+                </tr>
+                <tr>
+                  <td class="num">03</td>
+                  <td class="layer">Adjudicate, by any system</td>
+                  <td class="std">GenLayer, Kleros, UMA, accounts</td>
+                </tr>
+                <tr>
+                  <td class="num">04</td>
+                  <td class="layer">Resolve, read by anyone</td>
+                  <td class="std">resolution(id) → EAS attestation</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="vertical-label" aria-hidden="true">
+              <span class="vl-text">Adjudicator</span>
+            </div>
+          </div>
+          <figcaption class="figcap">The lifecycle behind one interface: registered like an arbitration clause, activated only on contest, resolved as an attestation.</figcaption>
+        </figure>
+
+        <!-- Left column -->
+        <div class="col-left">
+        <section class="col-block">
+          <h2 class="section-h"><span>Escalation, mix and match</span><span class="num">§ 01</span></h2>
+          <p class="first">Adjudication systems differ in cost and in trust assumptions, and which is "more secure" is case-dependent, so the standard doesn't rank systems or fix an order. It provides the building blocks; whoever composes an escalation chain chooses which systems sit on it and in what sequence, escalating on contest, up to off-chain ADR.</p>
+          <p>Later rungs discipline earlier ones by their mere availability. Each stage is funded only when it is used: activation pays for the first round, and how later rounds are funded is each composite's design.</p>
+        </section>
+
+        <section class="col-block">
+          <h2 class="section-h"><span>What the standard covers</span><span class="num">§ 03</span></h2>
+          <p>A two-phase lifecycle over four states (<code>None / Registered / Active / Resolved</code>), payable entry points so fee-charging systems work, pull-based resolution reading, and ERC-165 discovery. Definitions, evidence, and resolutions live behind EAS attestations, so semantics evolve without touching deployed contracts. Fee semantics, evidence windows, and escalation entry points stay implementation-defined. A companion ERC covers composition and factories: pre-built, audited glue instantiated in one transaction.</p>
+        </section>
+        </div>
+
+        <!-- Right column -->
+        <div class="col-right">
+        <section class="col-block">
+          <h2 class="section-h"><span>Composability</span><span class="num">§ 02</span></h2>
+          <p>An aggregate of adjudicators <b style="color:var(--ink)">is</b> an adjudicator. An escalation router implements the same interface as its children. So does an X-of-Y panel. Because compositions are themselves adjudicators, they nest arbitrarily, and consumers never need to know whether they are talking to a single court or a whole tree of them.</p>
+          <ul class="bullets">
+            <li><span class="marker">i.</span><b>Single system.</b> Binary resolution on one Adjudicator (GenLayer only; Kleros only).</li>
+            <li><span class="marker">ii.</span><b>Escalation chains.</b> GenLayer to Kleros, or any sequence the composer picks, escalating on contest.</li>
+            <li><span class="marker">iii.</span><b>X-of-Y panels.</b> 2-of-3 across GenLayer, Kleros, and UMA, or a majority of 11 agents.</li>
+            <li><span class="marker">iv.</span><b>No contest, no adjudication.</b> Uncontested cases resolve with the default outcome; only real contests pay for adjudication.</li>
+          </ul>
+        </section>
+        </div>
+
+      </div>
+
+      <!-- ───── Colophon ───── -->
+      <footer class="colophon">
+        <div>
+          <div class="cta">Read the draft · <b>github.com/genlayer-foundation/erc-composable-adjudication</b></div>
+          <div style="margin-top:1.2mm">Open standard · Natural-language pre-draft · Co-authored across adjudication systems</div>
+        </div>
+        <div class="right">
+          <span class="deadline"><span class="pulse"></span>Status · Pre-draft v0.1 · July 2026</span>
+        </div>
+      </footer>
+
+    </article>
+  </div>
+</body>
+</html>
