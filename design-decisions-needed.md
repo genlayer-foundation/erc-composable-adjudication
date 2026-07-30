@@ -5,10 +5,10 @@ Running to-do list of open design decisions for the Composable Adjudication ERCs
 ## Core ERC
 
 ### 1. EAS schema contents
-The three schemas — **adjudication definition** (question, outcome space and meaning, baseline references, parties, activation authorization, process-parameter echoes), **evidence** (content or pointer + hash, submitter context, possibly a type tag), **resolution** (outcome, reference to the definition it answers) — need concrete field lists registered in the EAS schema registry.
+The three schemas — **adjudication definition** (question, outcome space and meaning, baseline references, parties, activation authorization, process-parameter echoes), **evidence** (content or pointer + hash, submitter context, possibly a type tag), **resolution** (outcome, reference to the definition it answers) — need concrete field lists registered in the EAS schema registry. **Priority raised (2026-07-30):** definitions are now mandatory on-chain and Adjudicators enforce activation authorization by decoding them, so at minimum the party-list/authorization field encoding must be normative — until it is, enforcement is per-implementation decoding.
 
 ### 2. Multi-chain attestation references and hosting chain
-An Adjudicator on chain A may need to reference attestations living on chain B — a bare 32-byte UID does not name a chain. Decide together: which chain hosts the attestations relative to the Adjudicator, how deployments state that choice, and the referencing convention (chain-qualified references, a designated attestation chain, or per-deployment choice documented in the definition schema).
+Partially settled (2026-07-30): **definition attestations MUST live on the Adjudicator's own chain** (on-chain readability for enforcement). Remaining: hosting and referencing conventions for evidence (read by adjudication systems off-chain, so flexibility may be acceptable) and whether resolution attestations must also be same-chain; and the general referencing convention where cross-chain pointers are unavoidable (a bare 32-byte UID does not name a chain).
 
 ### 3. ERC-165 interface IDs
 Mechanical: compute and freeze the interface IDs once the function signatures stop moving.
