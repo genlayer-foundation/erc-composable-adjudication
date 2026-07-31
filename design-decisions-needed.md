@@ -5,10 +5,86 @@ Running to-do list of open design decisions for the Composable Adjudication ERCs
 ## Core ERC
 
 ### 1. EAS schema contents
-The three schemas need concrete field lists registered in the EAS schema registry: **adjudication definition** (question, outcome space and meaning, baseline references, parties, activation authorization, process-parameter echoes), **evidence** (content or pointer + hash, submitter context, possibly a type tag), and **resolution** (outcome, reference to the definition it answers). **Priority raised (2026-07-30):** definitions are now mandatory on-chain and Adjudicators enforce activation authorization by decoding them, so at minimum the party-list/authorization field encoding must be normative. Until it is, enforcement is per-implementation decoding.
+The three schemas (**adjudication definition**, **evidence**, **resolution**) need concrete field lists registered in the EAS schema registry. **Priority raised (2026-07-30):** definitions are now mandatory on-chain and Adjudicators enforce activation authorization by decoding them, so at minimum the party-list/authorization field encoding must be normative. Until it is, enforcement is per-implementation decoding, and a definition authored for one Adjudicator cannot be handed to another, which defeats swappability at the semantic layer while the function signatures match perfectly.
+
+**Which schemas need normative content.** The test is which of them a *contract* decodes on-chain:
+
+| Schema | On-chain reader | Normative layout needed |
+|---|---|---|
+| Definition | The Adjudicator, to enforce activation authorization (decision 15) | Yes |
+| Resolution | Composites, to adopt a child's outcome or compare children's outcomes | Yes |
+| Evidence | None; the normative case link is the `EvidenceLinked` event, and adjudication systems read content off-chain | No; RECOMMENDED suffices |
+
+The resolution row is the piece that was missing from this item: a generic X-of-Y panel cannot decide whether children *agree*, and an escalation router cannot adopt a child's resolution, unless outcomes decode uniformly across heterogeneous leaves. This is §5 below, but the enabling change belongs in the core schema, not in ERC #2.
+
+**Candidate schemas (proposal for circulation, not settled).** All registered with `revocable = false` and no resolver, per decision 16; attestations carry `expirationTime` zero. EAS schema strings are a flat comma-separated list with no comment syntax, so the annotated blocks below are documentation only: the exact one-line string under each block is what gets registered, and its field order and spacing are load-bearing because the schema UID is a hash over that string.
+
+**Adjudication definition**
+
+```
+{
+  // ─── Enforced on-chain by the Adjudicator ───
+  address[] parties,           // may activate, each unilaterally; empty = none named
+  bool      openActivation,    // definition opts into activation by anyone
+
+  // ─── Not read by the Adjudicator, but still part of the canonical schema ───
+  bytes32   resolutionSchema,  // EAS schema UID the resolution must use
+  string    question,          // what is being decided
+  string[]  outcomes,          // the outcome space, index-addressable
+  bytes32   baselineHash,      // content hash of the parties' agreement and its context
+  bytes     processParams      // implementation-defined, opaque
+}
+```
+`address[] parties,bool openActivation,bytes32 resolutionSchema,string question,string[] outcomes,bytes32 baselineHash,bytes processParams`
+
+The head is exactly decision 15's precedence rule and nothing more: parties named → only they activate; else `openActivation` → anyone; else registrant only. Activation arrives as a transaction from an address, so `address[]` is the only enforceable form: a definition whose parties are off-chain identities leaves the array empty and correctly falls through to registrant-only. `outcomes` on-chain lets composites and UIs interpret a resolution without an off-chain fetch.
+
+**Resolution**
+
+```
+{
+  // ─── Read on-chain by composites ───
+  bytes32 outcome,        // comparable across leaves; its meaning is set by the definition
+
+  // ─── Not read on-chain ───
+  bytes32 rationaleHash,  // content hash of the justification, if any
+  bytes   systemData      // the underlying system's native result, opaque
+}
+```
+`bytes32 outcome,bytes32 rationaleHash,bytes systemData`
+
+The ERC constrains only that two outcomes are comparable, never what one means (decision 9 intact). The tail deliberately carries **no** definition reference: that binding was considered and rejected on 2026-07-30, since `resolution()` is itself the provenance.
+
+**Evidence.** RECOMMENDED in full; no field is decoded on-chain, so nothing here is normative.
+
+```
+{
+  bytes32 contentHash,  // authoritative
+  string  contentURI,   // retrieval hint, non-authoritative
+  string  kind          // type tag for renderers
+}
+```
+`bytes32 contentHash,string contentURI,string kind`
+
+No definition field; the draft's `refUID` traceability recommendation covers that.
+
+**How the layout is made binding: resolved by research (2026-07-30), see `knowledgebase.md`.** Two candidates were on the table; the second is now ruled out on security grounds.
+
+1. **Canonical schema UID, whole-tuple decode (recommended).** The ERC publishes byte-exact schema strings; anyone registers them permissionlessly. An Adjudicator gates on `attestation.schema == CANONICAL_DEFINITION_SCHEMA_UID`, a plain `bytes32` comparison with no registry lookup, and then decodes the full tuple. **Verified:** the schema UID is `keccak256(abi.encodePacked(schemaString, resolver, revocable))` with no chain id, sender, nonce, or registry address in the preimage, so the same string with `resolver = address(0)` and `revocable = false` yields the *same UID on every chain* and the ERC can name it as a chain-independent constant. (A resolver would break this unless deployed at an identical address per chain.)
+2. **Layout-prefix compatibility: REJECTED.** Mandating only that the first two fields are `parties` and `openActivation`, letting extenders append, is unsafe over attestation data that anyone may author. **Verified empirically:** with a leading dynamic `address[]`, a payload too short to contain the expected fields does *not* reliably revert, because the decoder silently aliases the array's length word as the missing static field; and because ABI head slots hold attacker-controlled offsets, a crafted payload can make a two-field prefix decode return *different* `parties`/`openActivation` values than a full decode of the same bytes. A contract enforcing authorization on the prefix and a UI displaying the full decode would then disagree about who may activate, precisely the failure mode on-chain definitions exist to prevent. Solidity's tolerance of trailing data is also documented as current behavior, not a guarantee.
+
+**Consequence: the head/tail split collapses.** With one canonical schema decoded whole, every field is normative in practice: the annotations above mark which fields the *Adjudicator* reads, not which are optional. Extension goes through the opaque `bytes processParams` field, never through a varied schema. If a use case genuinely needs a different definition schema, it is a different schema with a different UID and no claim to portability.
+
+**Open sub-questions.** Whether `outcome` reserves a zero value for "undecided / refused to arbitrate" (useful to composites, but it is a semantic constraint and decision 9 pushes against it); whether the baseline gets a `string baselineURI` retrieval hint alongside the authoritative hash (decision 16 warns against mutable references, so a hint would have to be explicitly non-authoritative, or the hash can simply be a CID); whether `question`/`outcomes` belong on-chain at all or behind the baseline hash, trading UI convenience against decision 16's compactness SHOULD; and whether to attach a schema **resolver** that validates `data` at attest time (EAS does not validate `data` against the schema string, so a malformed definition is registrable, but a resolver costs the chain-independent UID above, and a malformed definition arguably just binds nobody).
+
+**Drafting requirement.** Schema strings are hashed verbatim: whitespace is significant, field names are optional, and neither the EAS SDK nor `easctl` normalizes anything. The ERC must publish the canonical strings byte-exact, and should state that registration is not idempotent (a second `register` of the same triple reverts `AlreadyExists`, which is expected once someone has registered it on a given chain).
+
+**Expected objection.** Mandating schema layouts is the over-specification the draft's Rationale blames for ERC-1497's fate. The distinguishing argument, which belongs in the Rationale if this lands: 1497 standardized off-chain JSON conventions with no enforcement point, so implementations drifted at zero cost; a head that a contract decodes has an enforcement point, since a non-conforming definition reverts.
+
+**Not an open question:** who may attest a definition. An attacker can attest a definition naming themselves sole party, but it binds nobody: the orphan-registration reasoning that rejected the resolution-attester binding on 2026-07-30 applies unchanged.
 
 ### 2. Multi-chain attestation references and hosting chain
-Mostly settled (2026-07-30): **definition and resolution attestations MUST live on the Adjudicator's own chain.** Definitions for on-chain readability and enforcement; resolutions as a necessary consequence of the Adjudicator's verification duty (it can only verify attestation properties on its own chain). Remaining: hosting and referencing conventions for evidence (read by adjudication systems off-chain, so flexibility may be acceptable), and the general referencing convention where cross-chain pointers are unavoidable (a bare 32-byte UID does not name a chain).
+Mostly settled (2026-07-30): **definition and resolution attestations MUST live on the Adjudicator's own chain.** Definitions for on-chain readability and enforcement; resolutions as a necessary consequence of the Adjudicator's verification duty (it can only verify attestation properties on its own chain). Remaining: hosting and referencing conventions for evidence (read by adjudication systems off-chain, so flexibility may be acceptable), and the general referencing convention where cross-chain pointers are unavoidable. **Sharpened by research (2026-07-30):** an attestation UID's preimage contains no chain id and no EAS contract address, so a bare 32-byte UID does not merely fail to *name* a chain, it is not globally unique at all, and the same UID can exist on two chains pointing at unrelated attestations. Any cross-chain convention must therefore carry a chain identifier alongside the UID, not assume the UID disambiguates itself.
 
 ### 3. ERC-165 interface IDs
 Mechanical: compute and freeze the interface IDs once the function signatures stop moving.
@@ -19,7 +95,7 @@ Mechanical: compute and freeze the interface IDs once the function signatures st
 ## Composition & Factories ERC
 
 ### 5. X-of-Y agreement semantics
-What "X children agree" means over EAS-defined resolutions. Likely equality of a designated outcome field in the resolution schema, but the aggregation rule and its reference (instantiation config vs. definition) need specification. Design direction already settled (2026-07-30): window-based exclusion of unresolved children (pool shrinks, threshold never lowers) and a no-quorum outcome in the definition's outcome space when the threshold becomes unreachable; non-conforming child resolutions and operator independence are implementation-defined; detailed semantics come with the implementation.
+What "X children agree" means over EAS-defined resolutions. Likely equality of a designated outcome field in the resolution schema, but the aggregation rule and its reference (instantiation config vs. definition) need specification. Design direction already settled (2026-07-30): window-based exclusion of unresolved children (pool shrinks, threshold never lowers) and a no-quorum outcome in the definition's outcome space when the threshold becomes unreachable; non-conforming child resolutions and operator independence are implementation-defined; detailed semantics come with the implementation. The enabling piece lives in §1: without a normative `outcome` head in the resolution schema, no generic composite can compare outcomes across heterogeneous leaves, so §1 must settle first.
 
 ### 6. Escalation funding patterns (parked as future work)
 Pay-as-you-go vs. pre-funded budget. Already moved to the outline's Future Work section; listed here only so the parked status is visible in one place.
