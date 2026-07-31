@@ -43,7 +43,7 @@ The head is exactly decision 15's precedence rule and nothing more: parties name
 
 ```
 {
-  // ─── Read on-chain by composites ───
+  // ─── Read on-chain by the X-of-Y Adjudicator composites ───
   bytes32 outcome,        // comparable across leaves; its meaning is set by the definition
 
   // ─── Not read on-chain ───
