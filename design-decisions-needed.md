@@ -15,7 +15,7 @@ The three schemas (**adjudication definition**, **evidence**, **resolution**) ne
 | Resolution | Composites, to adopt a child's outcome or compare children's outcomes | Yes |
 | Evidence | None; the normative case link is the `EvidenceLinked` event, and adjudication systems read content off-chain | No; RECOMMENDED suffices |
 
-The resolution row is the piece that was missing from this item: a generic X-of-Y panel cannot decide whether children *agree*, and an escalation router cannot adopt a child's resolution, unless outcomes decode uniformly across heterogeneous leaves. This is §5 below, but the enabling change belongs in the core schema, not in ERC #2.
+A generic X-of-Y panel cannot decide whether children *agree*, and an escalation router cannot adopt a child's resolution, unless outcomes decode uniformly across heterogeneous leaves. This is §5 below, but the enabling change belongs in the core schema, not in ERC #2.
 
 **Candidate schemas (proposal for circulation, not settled).** All registered with `revocable = false` and no resolver, per decision 16; attestations carry `expirationTime` zero. EAS schema strings are a flat comma-separated list with no comment syntax, so the annotated blocks below are documentation only: the exact one-line string under each block is what gets registered, and its field order and spacing are load-bearing because the schema UID is a hash over that string.
 
@@ -53,7 +53,7 @@ The head is exactly decision 15's precedence rule and nothing more: parties name
 ```
 `bytes32 outcome,bytes32 rationaleHash,bytes systemData`
 
-The ERC constrains only that two outcomes are comparable, never what one means (decision 9 intact). The tail deliberately carries **no** definition reference: that binding was considered and rejected on 2026-07-30, since `resolution()` is itself the provenance.
+The ERC constrains only that two outcomes are comparable, never what one means (decision 9 intact). The tail deliberately carries **no** definition reference: `resolution()` is itself the provenance.
 
 **Evidence.** RECOMMENDED in full; no field is decoded on-chain, so nothing here is normative.
 
@@ -68,7 +68,7 @@ The ERC constrains only that two outcomes are comparable, never what one means (
 
 No definition field; the draft's `refUID` traceability recommendation covers that.
 
-**How the layout is made binding: resolved by research (2026-07-30), see `knowledgebase.md`.** Two candidates were on the table; the second is now ruled out on security grounds.
+**How the layout is made binding: resolved by research (2026-07-30), see `knowledgebase.md`.** Of the two candidates, the second is rejected on security grounds.
 
 1. **Canonical schema UID, whole-tuple decode (recommended).** The ERC publishes byte-exact schema strings; anyone registers them permissionlessly. An Adjudicator gates on `attestation.schema == CANONICAL_DEFINITION_SCHEMA_UID`, a plain `bytes32` comparison with no registry lookup, and then decodes the full tuple. **Verified:** the schema UID is `keccak256(abi.encodePacked(schemaString, resolver, revocable))` with no chain id, sender, nonce, or registry address in the preimage, so the same string with `resolver = address(0)` and `revocable = false` yields the *same UID on every chain* and the ERC can name it as a chain-independent constant. (A resolver would break this unless deployed at an identical address per chain.)
 2. **Layout-prefix compatibility: REJECTED.** Mandating only that the first two fields are `parties` and `openActivation`, letting extenders append, is unsafe over attestation data that anyone may author. **Verified empirically:** with a leading dynamic `address[]`, a payload too short to contain the expected fields does *not* reliably revert, because the decoder silently aliases the array's length word as the missing static field; and because ABI head slots hold attacker-controlled offsets, a crafted payload can make a two-field prefix decode return *different* `parties`/`openActivation` values than a full decode of the same bytes. A contract enforcing authorization on the prefix and a UI displaying the full decode would then disagree about who may activate, precisely the failure mode on-chain definitions exist to prevent. Solidity's tolerance of trailing data is also documented as current behavior, not a guarantee.
@@ -81,7 +81,7 @@ No definition field; the draft's `refUID` traceability recommendation covers tha
 
 **Expected objection.** Mandating schema layouts is the over-specification the draft's Rationale blames for ERC-1497's fate. The distinguishing argument, which belongs in the Rationale if this lands: 1497 standardized off-chain JSON conventions with no enforcement point, so implementations drifted at zero cost; a head that a contract decodes has an enforcement point, since a non-conforming definition reverts.
 
-**Not an open question:** who may attest a definition. An attacker can attest a definition naming themselves sole party, but it binds nobody: the orphan-registration reasoning that rejected the resolution-attester binding on 2026-07-30 applies unchanged.
+**Not an open question:** who may attest a definition. An attacker can attest a definition naming themselves sole party, but it binds nobody, by the same orphan-registration reasoning that makes a resolution-attester binding unnecessary.
 
 ### 2. Multi-chain attestation references and hosting chain
 Mostly settled (2026-07-30): **definition and resolution attestations MUST live on the Adjudicator's own chain.** Definitions for on-chain readability and enforcement; resolutions as a necessary consequence of the Adjudicator's verification duty (it can only verify attestation properties on its own chain). Remaining: hosting and referencing conventions for evidence (read by adjudication systems off-chain, so flexibility may be acceptable), and the general referencing convention where cross-chain pointers are unavoidable. **Sharpened by research (2026-07-30):** an attestation UID's preimage contains no chain id and no EAS contract address, so a bare 32-byte UID does not merely fail to *name* a chain, it is not globally unique at all, and the same UID can exist on two chains pointing at unrelated attestations. Any cross-chain convention must therefore carry a chain identifier alongside the UID, not assume the UID disambiguates itself.
