@@ -15,7 +15,7 @@ Two properties carry the design:
 - **Escalation, mix and match.** Adjudication systems differ in cost and in trust assumptions; which is "more secure" is case-dependent and contestable, so the standard doesn't rank systems or fix an order. It provides the building blocks: whoever composes an escalation chain chooses which systems sit on it and in what sequence, escalating on contest. Later rungs discipline earlier ones by their mere availability, and each stage is funded only when it is used.
 - **Composability, adjudicators all the way down.** An aggregate of adjudicators *is* an adjudicator: an escalation router implements the same interface as its children, and so does an X-of-Y panel. Compositions nest arbitrarily, and consumers never need to know whether they are talking to a single court or a whole tree of them.
 
-The standard keeps the on-chain surface tiny (a two-phase lifecycle over `None / Registered / Active / Resolved`, payable entry points, pull-based resolution reading, ERC-165 discovery) and delegates all semantics (definitions, evidence, resolutions) to EAS attestations, so meaning can evolve without touching deployed contracts. Fee semantics, evidence windows, and escalation entry points are deliberately implementation-defined.
+The standard keeps the on-chain surface tiny (a three-state lifecycle, `Registered → Active → Resolved`, payable entry points, pull-based resolution reading, ERC-165 discovery) and delegates all semantics (definitions, evidence, resolutions) to EAS attestations, so meaning can evolve without touching deployed contracts. Fee semantics, evidence windows, and escalation entry points are deliberately implementation-defined.
 
 ## Repository contents
 

@@ -18,7 +18,7 @@ An aggregate of adjudicators **is** an adjudicator. An escalation router (GenLay
 
 ## What the standard covers, and what it doesn't
 
-**Standardized:** a two-phase lifecycle (registration at agreement time: cheap, dormant, one canonical case ID from day one; `payable` activation at contest time, so fee-charging systems work), four states (`None / Registered / Active / Resolved`), pull-based resolution reading, interface discovery via ERC-165, and events. **Delegated to EAS attestations:** adjudication definitions, evidence, and resolutions. The standard carries pointers; schemas live in an EAS registry, keeping the on-chain surface minimal and the semantics evolvable. **Out of scope:** fee amounts and semantics, evidence timing windows, and escalation entry points, all implementation-defined.
+**Standardized:** a three-state lifecycle, `Registered → Active → Resolved` (registration at agreement time: cheap, dormant, one canonical case ID from day one; `payable` activation at contest time, so fee-charging systems work), pull-based resolution reading, interface discovery via ERC-165, and events. **Delegated to EAS attestations:** adjudication definitions, evidence, and resolutions. The standard carries pointers; schemas live in an EAS registry, keeping the on-chain surface minimal and the semantics evolvable. **Out of scope:** fee amounts and semantics, evidence timing windows, and escalation entry points, all implementation-defined.
 
 ## Two ERCs
 
